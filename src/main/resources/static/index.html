@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ジオメトリを生成して遊ぼｂｙメリー</title>
+  <!-- この書き方だと↓キャッシュに残らないからこのhtml開き直すたびに
+  再読み込みになるので本番では直してね scriptもだよ-->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: white;
+      font-family:"Hiragino Sans", sans-serif;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+  <script src="/lib/p5.min.js"></script>
+</head>
+
+<body>
+<h1>実験</h1>
+<p>processingで生成←[spring boot]→p5で表示するよ</p>
+<div id="canvas-wrapper" style="position:relative;"></div>
+<script>
+  let vertices = [];
+  let ready = false;
+
+  function setup(){
+    const canvas = createCanvas(500,500,WEBGL);
+    canvas.parent("canvas-wrapper");
+
+    getGem();
+
+    const button = createButton('click reGene');
+    button.parent("canvas-wrapper");
+    button.position(width*0.5-button.size().width*0.5, height*0.9);
+    button.mousePressed(()=>{
+      getGem();
+      loop();
+    });
+  }
+
+  function getGem(){
+    //fetchが非同期処理なんだな〜
+    vertices = [];
+    fetch('/api/test')
+            .then(response => response.json()) // 届いたデータをJSONとして解釈
+            .then(data => {
+              vertices = data.vertices;
+              ready = true;
+            });
+  }
+
+  function draw(){
+    if(ready) {
+      background(200);
+      camera(0,0,1600,
+              0,0,0,
+              0,1,0);
+      rotateX(frameCount*0.01);
+      rotateY(frameCount*0.012);
+      rotateZ(frameCount*0.013);
+      //orbitControl();
+      //なんかライトがうまく反映されない
+      //lights();
+
+      strokeWeight(2);
+      for (let i = 0; i < vertices.length; i++) {
+        fill(random(255));
+        for (let j = 0; j < vertices[i].length; j++) {
+          beginShape();
+          for (let k = 0; k < vertices[i][j].length; k++) {
+            vertex(vertices[i][j][k][0],
+                    vertices[i][j][k][1],
+                    vertices[i][j][k][2]);
+
+          }
+          endShape(CLOSE);
+        }
+      }
+      ready = false;
+      noLoop();
+    }else {
+      background(200);
+      camera();//Default(0,0,800,0,0,0,0,1,0)
+      fill(255);
+      strokeWeight(1);
+      rotateX(frameCount*0.01);
+      rotateY(frameCount*0.012);
+      rotateZ(frameCount*0.013);
+      box(50);
+    }
+  }
+</script>
+<p>processingからもってきたデータとp5.Geometryと頂点の配列構造が違うので
+  書き直すの今はめんどくさいのでnoLoop();です、動きません</p>
+<p>ボタンを押すとボロノイのセルの数の値をランダムで生成しなおします</p>
+<p>時間かかります、重いです</p>
+<p>テストテスト</p>
+<p>hemesh/example/hemesh/create/Ref_HEMC_VoronoiBoxを使いました</p>
+</body>
+</html>
